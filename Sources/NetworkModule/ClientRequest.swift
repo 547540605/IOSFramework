@@ -12,6 +12,7 @@ struct ClientRequest: Codable {
     let args: Args
     
     
+    
     struct Args: Codable {
         let image: String
         let brightness: String
