@@ -76,11 +76,16 @@ class ConnectionHandler {
                      }
                 } catch {
                     print("Failded to decode JSON: \(error)")
+
                 }
+                
+                //继续接收下一部分数据
+                self.receiveData()
                 
                 // 如果数据接收完毕，继续接收下一部分数据
                 if isComplete {
-                    self.receiveData()
+                    print("Connection completed")
+                     self.cancel()
                 }
             }
         }
