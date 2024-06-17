@@ -10,6 +10,9 @@ import Network
 
 public class Server{
     var listener: NWListener?
+    var nextID: Int = 0
+    var connectionsHandlers: [Int: ConnectionHandler] = [:]
+    var newRequestCallback: ((ClientRequest) -> Void)?
 
     public init() throws {
         let listener = try NWListener(using: .tcp, on: 8889)
@@ -39,16 +42,17 @@ public class Server{
         }
     }
     
-    var nextID: Int = 0
-    
-    var connectionsHandlers: [Int: ConnectionHandler] = [:]
-    
     func didAccept(connection: NWConnection) {
         let handler = ConnectionHandler(connection: connection, uniqueID: self.nextID)
         self.nextID += 1
         self.connectionsHandlers[handler.uniqueID] = handler
         handler.didStopCallback = self.connectionDidStop(_:)
+        handler.newRequestCallback = self.newRequestCallback
         handler.start()
+    }
+    
+    public func setNewRequestCallback(_ callback: @escaping (ClientRequest) -> Void) {
+        self.newRequestCallback = callback
     }
     
     func stop() {
@@ -64,7 +68,7 @@ public class Server{
     
     func listenerDidFail(error: Error) {
         print("Listener failed with error: \(error)")
-        // 你可以在这里添加一些错误处理的代码，例如重启服务器或者记录错误日志
+        // 可以在这里添加一些错误处理的代码，例如重启服务器或者记录错误日志
     }
     
     func connectionDidStop(_ handler: ConnectionHandler) {

@@ -12,12 +12,12 @@ class ConnectionHandler {
     var connection: NWConnection
     var uniqueID: Int
     var didStopCallback: ((ConnectionHandler) -> Void)?
+    var newRequestCallback: ((ClientRequest) -> Void)?
     var clientRequest: ClientRequest?
     
     init(connection: NWConnection, uniqueID: Int) {
         self.connection = connection
         self.uniqueID = uniqueID
-        
     }
     
     func start() {
@@ -56,17 +56,26 @@ class ConnectionHandler {
             }
             
             if let data = data {
+                
                 let dataString = String(data: data, encoding: .utf8)
                 print("Received data: \(dataString ?? "")")
                 
                 // 在这里处理接收到的数据
                 
-                if let jsonData = dataString?.data(using: .utf8) {
-                    do {
-                        self.clientRequest = try JSONDecoder().decode(ClientRequest.self, from: jsonData)
-                    } catch {
-                        print("Failed to decode JSON: \(error)")
-                    }
+                do {
+                    let decoder = JSONDecoder()
+                    self.clientRequest = try decoder.decode(ClientRequest.self, from: data)
+                    print("Received data: \(dataString ?? "")")
+                     
+                     // 验证请求
+                     if let request = self.clientRequest, request.validate() {
+                         // 通知 Server 类有新的客户端请求到达
+                         self.newRequestCallback?(request)
+                     } else {
+                         print("Invalid request")
+                     }
+                } catch {
+                    print("Failded to decode JSON: \(error)")
                 }
                 
                 // 如果数据接收完毕，继续接收下一部分数据
